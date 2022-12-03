@@ -1,20 +1,39 @@
-version: '3.3'
+version: "3.3"
+
 services:
-  db:
-    image: mysql:5.7
-    restart: always
+  mysqldb:
+    container_name: mysqldb
+    hostname: mysqldb
+    image: mysql:8.0
+    command: --default-authentication-plugin=mysql_native_password
+    restart: unless-stopped
     environment:
-      MYSQL_DATABASE: 'filemanagerdb'
-      MYSQL_USER: 'user'
-      MYSQL_PASSWORD: 'password'
-      MYSQL_ROOT_PASSWORD: 'password'
+      - MYSQL_ROOT_PASSWORD=password
+      - MYSQL_DATABASE=file_manager_db
     ports:
-      - '3306:3306'
-    expose:
-      - '3306'
+      - "3306:3306"
     volumes:
-      - my-db:/var/lib/mysql
+      - db:/var/lib/mysql
+  upload-file-manager:
+    container_name: upload-file-manager
+    hostname: upload-file-manager
+    depends_on:
+      - mysqldb
+    build:
+      context: .
+    restart: on-failure
+    ports:
+      - "8080:8080"
+    environment:
+      - MYSQL_HOST=mysqldb
+      - MYSQL_PORT=3306
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=password
+      - MYSQL_DB=file_manager_db
+    volumes:
+      - "~/.m2:/~/.m2"
+    stdin_open: true
+    tty: true
+
 volumes:
-  my-db:
-
-
+  db:
